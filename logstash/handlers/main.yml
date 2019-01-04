@@ -1,0 +1,11 @@
+---
+# handlers file for logstash
+- name: restart logstash server
+  systemd:
+    name: logstash
+    state: restarted
+    
+- name: enable logstash service
+  systemd:
+    name: logstash
+    enabled: yes

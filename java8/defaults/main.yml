@@ -1,0 +1,5 @@
+---
+# defaults file for java8
+jdk_url : https://s3.amazonaws.com/my_jdk8/jdk-8u144-linux-x64.tar.gz
+jdk_tar : jdk-8u144-linux-x64.tar.gz
+java_home: /usr/java/jdk1.8.0_144

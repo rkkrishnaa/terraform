@@ -1,0 +1,11 @@
+---
+# handlers file for elasticsearch
+- name: restart elasticsearch server
+  systemd:
+    name: elasticsearch
+    state: restarted
+    
+- name: enable elasticsearch service
+  systemd:
+    name: elasticsearch
+    enabled: yes

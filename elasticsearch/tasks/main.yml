@@ -1,0 +1,62 @@
+---
+# tasks file for elasticsearch
+- name: Create system user account for elasticsearch
+  user:
+    name: elasticsearch
+    shell: /bin/bash
+    state: present
+    system: no
+    createhome: yes
+    home: "{{ elasticsearch_home }}"
+
+- name: Create ssh directory
+  file:
+    path: "{{ elasticsearch_home }}/.ssh"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    force: yes
+    mode: u=rx,g=,o=
+
+- name: Copy ssh key files
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: elasticsearch
+    group: elasticsearch
+    force: yes
+    mode: u=r,g=,o=
+  with_items:
+      - { src: 'files/id_rsa', dest: '{{ elasticsearch_home }}/.ssh/id_rsa' }
+      - { src: 'files/id_rsa.pub', dest: '{{ elasticsearch_home }}/.ssh/id_rsa.pub' }
+      - { src: 'files/authorized_keys', dest: '{{ elasticsearch_home }}/.ssh/authorized_keys' }
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Download elasticsearch
+  get_url:
+    url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}.deb"
+    dest: /tmp/elasticsearch-{{ elasticsearch_version }}.deb
+    force: yes
+    checksum: sha512:253a5adaac04a1c6ce310ffcca88b5ade0a2c51bab890541f6a82faa4f310f69f50a338aab2d6d6ede552031c224337751eb91d2ad2587c46a93e2fb56669eb3
+
+- name: Install elasticsearch
+  apt:
+    deb: /tmp/elasticsearch-{{ elasticsearch_version }}.deb
+
+- name: Configure elasticsearch service dynamic files
+  template:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    owner: elasticsearch
+    group: elasticsearch
+    force: yes
+    mode: 0755
+  with_items:
+    - { src: 'templates/elasticsearch.yml.j2', dest: '/etc/elasticsearch/elasticsearch.yml' }
+    - { src: 'templates/elasticsearch.j2', dest: '/etc/default/elasticsearch'}
+  notify:
+    - restart elasticsearch server
+    - enable elasticsearch service

@@ -1,0 +1,61 @@
+---
+# tasks file for kibana
+- name: Create system user account for kibana
+  user:
+    name: kibana
+    shell: /bin/bash
+    state: present
+    system: no
+    createhome: yes
+    home: "{{ kibana_home }}"
+
+- name: Create ssh directory
+  file:
+    path: "{{ kibana_home }}/.ssh"
+    state: directory
+    owner: kibana
+    group: kibana
+    force: yes
+    mode: u=rx,g=,o=
+
+- name: Copy ssh key files
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: kibana
+    group: kibana
+    force: yes
+    mode: u=r,g=,o=
+  with_items:
+      - { src: 'files/id_rsa', dest: '{{ kibana_home }}/.ssh/id_rsa' }
+      - { src: 'files/id_rsa.pub', dest: '{{ kibana_home }}/.ssh/id_rsa.pub' }
+      - { src: 'files/authorized_keys', dest: '{{ kibana_home }}/.ssh/authorized_keys' }
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Download kibana
+  get_url:
+    url: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-amd64.deb"
+    dest: "/tmp/kibana-{{ kibana_version }}-amd64.deb"
+    force: yes
+    checksum: sha512:32be49e7f7f88bd7eef6be41d21ef71c923d913946b689c84ccde422d38ed3636b27e5cc1198e56644aa880a8dec1efccb6264225cec2e5b5718eb3e7ed3d133
+
+- name: Install kibana
+  apt:
+    deb: "/tmp/kibana-{{ kibana_version }}-amd64.deb"
+
+- name: Configure kibana service dynamic files
+  template:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    owner: kibana
+    group: kibana
+    force: yes
+    mode: 0755
+  with_items:
+    - { src: 'templates/kibana.yml.j2', dest: '/opt/kibana/config/kibana.yml' }
+  notify:
+    - restart kibana server
+    - enable kibana service

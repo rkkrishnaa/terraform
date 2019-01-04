@@ -1,0 +1,11 @@
+---
+# handlers file for kibana
+- name: restart kibana server
+  systemd:
+    name: kibana
+    state: restarted
+    
+- name: enable kibana service
+  systemd:
+    name: kibana
+    enabled: yes

@@ -1,0 +1,14 @@
+---
+# defaults file for elasticsearch
+ansible_managed: This file is managed by Ansible, all changes will be lost
+java_home: /usr/java/jdk1.8.0_144
+elasticsearch_version: 6.4.3
+elasticsearch_home: /home/elasticsearch
+cluster_name: cluster1
+node_rack: rack-1
+node_name: localhost
+path_data: /var/lib/elasticsearch
+path_logs: /var/log/elasticsearch
+bootstrap_memory_lock: 'false'
+network_host: 0.0.0.0
+http_port: 9200

@@ -1,0 +1,77 @@
+---
+# tasks file for logstash
+- name: Create system user account for logstash
+  user:
+    name: logstash
+    shell: /bin/bash
+    state: present
+    system: no
+    createhome: yes
+    home: "{{ logstash_home }}"
+
+- name: Create ssh directory
+  file:
+    path: "{{ logstash_home }}/.ssh"
+    state: directory
+    owner: logstash
+    group: logstash
+    force: yes
+    mode: u=rx,g=,o=
+
+- name: Copy ssh key files
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: logstash
+    group: logstash
+    force: yes
+    mode: u=r,g=,o=
+  with_items:
+      - { src: 'files/id_rsa', dest: '{{ logstash_home }}/.ssh/id_rsa' }
+      - { src: 'files/id_rsa.pub', dest: '{{ logstash_home }}/.ssh/id_rsa.pub' }
+      - { src: 'files/authorized_keys', dest: '{{ logstash_home }}/.ssh/authorized_keys' }
+
+- name: Add elasticsearch apt key to the server
+  apt_key:
+    url: https://packages.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add logstash repo to the server
+  apt_repository:
+    repo: deb http://packages.elastic.co/logstash/2.3/debian stable main
+    filename: logstash-2.3.list
+    state: present
+
+- name: Update apt cache and install logstash server
+  apt:
+    name: logstash
+    update_cache: yes
+
+- name: Configure SSL certificates for logstash service
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: logstash
+    group: logstash
+    mode: u=rx,g=,o= 
+  with_items:
+    - [ '{{ logstash_cert_path }}', '{{ logstash_key_path }}' ]
+
+- name: Configure SSL Certificate
+  shell: sudo openssl req -subj '/CN='$(hostname -f)'/' -x509 -days 3650 -batch -nodes -newkey rsa:2048 -keyout /etc/pki/tls/private/logstash-forwarder.key -out /etc/pki/tls/certs/logstash-forwarder.crt
+
+- name: Configure logstash service dynamic files
+  template:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    owner: logstash
+    group: logstash
+    force: yes
+    mode: 0755
+  with_items:
+    - { src: 'templates/logstash.j2', dest: '/etc/default/logstash' }
+    - { src: 'templates/02-beats-input.conf.j2', dest: '/etc/logstash/conf.d/02-beats-input.conf' }
+    - { src: 'templates/30-elasticsearch-output.conf.j2', dest: '/etc/logstash/conf.d/30-elasticsearch-output.conf'}
+  notify:
+    - restart logstash server
+    - enable logstash service

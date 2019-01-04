@@ -1,0 +1,32 @@
+---
+# tasks file for filebeat
+- name: Add elasticsearch apt key to the server
+  apt_key:
+    url: https://packages.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add filebeat repo to the server
+  apt_repository:
+    repo: deb https://packages.elastic.co/beats/apt stable main
+    filename: beats.list
+    state: present
+
+- name: Update apt cache and install filebeat agent
+  apt:
+    name: filebeat
+    update_cache: yes
+
+- name: Configure filebeat agent dynamic files
+  template:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    owner: filebeat
+    group: filebeat
+    force: yes
+    mode: 0755
+  with_items:
+    - { src: 'templates/filebeat.yml.j2', dest: '/etc/filebeat/filebeat.yml' }
+
+  notify:
+    - restart filebeat agent
+    - enable filebeat agent

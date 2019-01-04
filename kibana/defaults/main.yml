@@ -1,0 +1,10 @@
+---
+# defaults file for kibana
+kibana_home: /home/kibana
+server_port: 5601
+server_host: 0.0.0.0
+server_basePath: ""
+server_maxPayloadBytes: 1048576
+elasticsearch_url: http://localhost:9200
+kibana_index: .kibana
+kibana_defaultAppId: discover

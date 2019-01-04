@@ -1,0 +1,9 @@
+---
+# defaults file for logstash
+logstash_home: /home/logstash
+java_home: /usr/java/jdk1.8.0_144
+logstash_cert_path: /etc/pki/tls/certs
+logstash_key_path: /etc/pki/tls/private
+beats_service_port: 5044
+elasticsearch_host: localhost
+elasticsearch_port: 9200

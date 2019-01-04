@@ -1,0 +1,25 @@
+---
+# tasks file for java8
+- name: Download JDK8 from repository
+  get_url:
+    url: "{{ jdk_url }}"
+    dest: "/tmp/{{ jdk_tar }}"
+    backup: yes
+    force: no
+    timeout: 30
+
+- name: Create a directory for JAVA_HOME
+  file:
+    path: "{{ java_home }}"
+    state: directory
+    mode: 0755
+
+- name: Extract JDK8 and move it to JAVA_HOME
+  unarchive:
+    src: "/tmp/{{ jdk_tar }}"
+    dest: "{{ java_home }}"
+    extra_opts: [--strip-components=1]
+    remote_src: yes
+    
+- name: Set JAVA_HOME environement variable in global profile
+  shell: sudo bash -c 'echo -e "export JAVA_HOME=/usr/java/jdk1.8.0_144\nexport PATH=\$PATH:\$JAVA_HOME/bin" >> /etc/profile.d/java.sh'
